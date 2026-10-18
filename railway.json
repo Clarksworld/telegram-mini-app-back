@@ -1,0 +1,1 @@
+{"build": {"builder": "NIX_BUILDER"}, "deploy": {"startCommand": "npm run dev"}}

@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRADE_BUY
+  TRADE_SELL
+  REFERRAL_BONUS
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  telegramId    BigInt    @unique
+  username      String?
+  firstName     String?
+  lastName      String?
+  languageCode  String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Referral System
+  referrerId    String?
+  referrer      User?      @relation("UserReferrals", fields: [referrerId], references: [id])
+  referrals     User[]     @relation("UserReferrals")
+
+  wallets       Wallet[]
+}
+
+model Wallet {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  currency      String    // e.g., "USDT", "BTC", "TON"
+  balance       Decimal   @default(0.00) @db.Decimal(20, 8)
+  lockedBalance Decimal   @default(0.00) @db.Decimal(20, 8)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id])
+  transactions  Transaction[]
+
+  @@unique([userId, currency])
+}
+
+model Transaction {
+  id              String            @id @default(uuid())
+  walletId        String
+  amount          Decimal           @db.Decimal(20, 8)
+  fee             Decimal           @default(0.00) @db.Decimal(20, 8)
+  type            TransactionType
+  status          TransactionStatus  @default(PENDING)
+
+  assetSymbol     String?           // e.g., "ETH"
+  executionPrice  Decimal?          @db.Decimal(20, 8)
+
+  externalTxId    String?           @unique
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  wallet          Wallet            @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([status])
+}
