@@ -1,8 +1,0 @@
-{
-  "build": {
-    "builder": "NIX_BUILDER"
-  },
-  "deploy": {
-    "startCommand": "npx prisma generate && npm start"
-  }
-}
