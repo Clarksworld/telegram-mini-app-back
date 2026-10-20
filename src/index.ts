@@ -2,19 +2,14 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
 import { validateTelegramInitData } from './auth';
 
 dotenv.config();
 
 const fastify = Fastify({ logger: true });
 
-// Configure Prisma with Driver Adapter for v7 compatibility
-const connectionString = process.env.DATABASE_URL || '';
-const pool = new pg.Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+// In Prisma v6, we use the standard client connection
+const prisma = new PrismaClient();
 
 fastify.register(cors, {
   origin: '*', // In production, restrict this to your Mini App domain
