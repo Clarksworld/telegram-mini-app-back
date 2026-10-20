@@ -43,7 +43,7 @@ fastify.get('/health', async () => {
   return { status: 'ok' };
 });
 
-fastify.get('/profile', async (request) => {
+fastify.get('/profile', async (request, reply) => {
   const tgUser = (request as any).user;
 
   try {
