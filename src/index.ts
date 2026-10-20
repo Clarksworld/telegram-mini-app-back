@@ -46,28 +46,37 @@ fastify.get('/health', async () => {
 fastify.get('/profile', async (request) => {
   const tgUser = (request as any).user;
 
-  // Upsert user in database
-  const user = await prisma.user.upsert({
-    where: { telegramId: tgUser.id },
-    update: {
-      username: tgUser.username,
-      firstName: tgUser.first_name,
-      lastName: tgUser.last_name,
-      languageCode: tgUser.language_code,
-    },
-    create: {
-      telegramId: tgUser.id,
-      username: tgUser.username,
-      firstName: tgUser.first_name,
-      lastName: tgUser.last_name,
-      languageCode: tgUser.language_code,
-    },
-  });
+  try {
+    // Upsert user in database
+    // CRITICAL: telegramId must be cast to BigInt for Prisma
+    const user = await prisma.user.upsert({
+      where: { telegramId: BigInt(tgUser.id) },
+      update: {
+        username: tgUser.username,
+        firstName: tgUser.first_name,
+        lastName: tgUser.last_name,
+        languageCode: tgUser.language_code,
+      },
+      create: {
+        telegramId: BigInt(tgUser.id),
+        username: tgUser.username,
+        firstName: tgUser.first_name,
+        lastName: tgUser.last_name,
+        languageCode: tgUser.language_code,
+      },
+    });
 
-  return {
-    user: user,
-    message: 'Welcome to the Trading App!',
-  };
+    return {
+      user: user,
+      message: 'Welcome to the Trading App!',
+    };
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({
+      error: 'Internal Server Error',
+      details: error instanceof Error ? error.message : 'Unknown database error'
+    });
+  }
 });
 
 const start = async () => {
