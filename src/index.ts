@@ -77,6 +77,12 @@ fastify.get('/profile', async (request) => {
 
 const start = async () => {
   try {
+    // Run migrations before starting the server
+    console.log('Running database migrations...');
+    const { execSync } = require('child_process');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    console.log('Database migrations completed successfully.');
+
     await fastify.listen({ port: Number(process.env.PORT) || 3001, host: '0.0.0.0' });
     const address = fastify.server.address();
     const port = typeof address === 'string' ? address : address?.port;
