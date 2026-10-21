@@ -55,6 +55,38 @@ fastify.get('/health', async () => {
   return { status: 'ok' };
 });
 
+fastify.post('/deposits', async (request, reply) => {
+  const tgUser = (request as any).user;
+  const { amount, currency, txId } = request.body as any;
+
+  if (!amount || !currency || !txId) {
+    return reply.status(400).send({ error: 'Amount, currency, and txId are required' });
+  }
+
+  try {
+    const deposit = await prisma.depositRequest.create({
+      data: {
+        userId: tgUser.id,
+        amount: amount,
+        currency: currency,
+        txId: txId,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Deposit request submitted successfully!',
+      depositId: deposit.id,
+    };
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      return reply.status(400).send({ error: 'This transaction ID has already been submitted.' });
+    }
+    fastify.log.error(error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
+});
+
 fastify.get('/profile', async (request, reply) => {
   const tgUser = (request as any).user;
 
