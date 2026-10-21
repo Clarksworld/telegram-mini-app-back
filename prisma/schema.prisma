@@ -37,6 +37,7 @@ model User {
   languageCode  String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+  depositAddress String?   @unique
 
   // Referral System
   referrerId    String?
