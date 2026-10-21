@@ -79,7 +79,10 @@ fastify.get('/profile', async (request, reply) => {
     });
 
     return {
-      user: user,
+      user: {
+        ...user,
+        telegramId: user.telegramId.toString(),
+      },
       message: 'Welcome to the Trading App!',
     };
   } catch (error) {
