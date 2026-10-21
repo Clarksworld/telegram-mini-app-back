@@ -22,6 +22,12 @@ enum TransactionStatus {
   CANCELLED
 }
 
+enum DepositStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id            String    @id @default(uuid())
   telegramId    BigInt    @unique
@@ -38,6 +44,7 @@ model User {
   referrals     User[]     @relation("UserReferrals")
 
   wallets       Wallet[]
+  deposits      DepositRequest[]
 }
 
 model Wallet {
@@ -75,4 +82,17 @@ model Transaction {
 
   @@index([walletId])
   @@index([status])
+}
+
+model DepositRequest {
+  id            String    @id @default(uuid())
+  userId        String
+  amount        Decimal   @db.Decimal(20, 8)
+  currency      String
+  txId          String    @unique
+  status        DepositStatus @default(PENDING)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id])
 }
