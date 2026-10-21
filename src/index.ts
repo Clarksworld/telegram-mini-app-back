@@ -9,7 +9,19 @@ dotenv.config();
 const fastify = Fastify({ logger: true });
 
 // In Prisma v6, we use the standard client connection
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['error', 'warn'],
+});
+
+// Add a health check for the database connection
+async function checkDbConnection() {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('✅ Database connection established successfully');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+  }
+}
 
 fastify.register(cors, {
   origin: '*', // In production, restrict this to your Mini App domain
@@ -81,7 +93,10 @@ fastify.get('/profile', async (request, reply) => {
 
 const start = async () => {
   try {
-    // Run migrations before starting the server
+    // 1. Verify Database Connection first
+    await checkDbConnection();
+
+    // 2. Run migrations before starting the server
     console.log('Running database migrations...');
     const { execSync } = require('child_process');
     execSync('npx prisma migrate deploy', { stdio: 'inherit' });
