@@ -10,10 +10,18 @@ import crypto from 'crypto';
  */
 export function validateTelegramInitData(initData: string, botToken: string): boolean {
   try {
+    if (!botToken) {
+      console.error('AUTH ERROR: BOT_TOKEN is missing in environment variables');
+      return false;
+    }
+
     const urlParams = new URLSearchParams(initData);
     const hash = urlParams.get('hash');
 
-    if (!hash) return false;
+    if (!hash) {
+      console.error('AUTH ERROR: No hash found in initData');
+      return false;
+    }
 
     // 1. Collect all pairs except 'hash' and sort them alphabetically
     const dataArray: string[] = [];
@@ -39,7 +47,15 @@ export function validateTelegramInitData(initData: string, botToken: string): bo
       .update(dataCheckString)
       .digest('hex');
 
-    return calculatedHash === hash;
+    const isValid = calculatedHash === hash;
+
+    if (!isValid) {
+      console.error('AUTH ERROR: Hash mismatch');
+      console.error('Received hash:', hash);
+      console.error('Calculated hash:', calculatedHash);
+    }
+
+    return isValid;
   } catch (error) {
     console.error('Error validating Telegram initData:', error);
     return false;
