@@ -3,7 +3,7 @@ import { JsonRpcProvider, Contract, formatUnits } from 'ethers';
 import { PrismaClient } from '@prisma/client';
 
 const BSC_RPC_URL = process.env.BSC_RPC_URL || 'https://bsc-dataseed.binance.org';
-const BSC_USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955'; // USDT on BSC
+const BSC_USDT_ADDRESS = process.env.BSC_USDT_ADDRESS || '0x55d398326f99059fF775485246999027B3197955';
 
 const ERC20_ABI = [
   'function balanceOf(address owner) view returns (uint256)',
@@ -18,7 +18,8 @@ export async function checkTonDepositsForUser(
   if (!tonAddress) return 0;
 
   try {
-    const url = `https://toncenter.com/api/v2/getTransactions?address=${encodeURIComponent(
+    const tonApiBase = process.env.TON_API_URL || 'https://toncenter.com/api/v2';
+    const url = `${tonApiBase}/getTransactions?address=${encodeURIComponent(
       tonAddress
     )}&limit=10&archival=false`;
 
