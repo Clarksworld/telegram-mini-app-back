@@ -1,13 +1,13 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "prisma generate && tsc",
-    "start": "node dist/index.js",
+    "start": "prisma db push && node dist/index.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -19,6 +19,7 @@
     "@neon/config": "^1.9.2",
     "@neon/env": "^1.6.3",
     "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^6.3.0",
     "@ton/crypto": "^3.3.0",
     "@ton/ton": "^16.3.0",
     "@types/node": "^26.6.5",
@@ -28,12 +29,9 @@
     "ethers": "^6.17.0",
     "fastify": "^5.12.7",
     "pg": "^8.23.1",
+    "prisma": "^6.3.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "zod": "^4.6.7"
-  },
-  "devDependencies": {
-    "@prisma/client": "^6.3.0",
-    "prisma": "^6.3.0"
   }
 }

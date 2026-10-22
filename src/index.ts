@@ -54,9 +54,13 @@ fastify.addHook('preHandler', async (request, reply) => {
   }
 });
 
-// Health check
+// Health check with deployment version
 fastify.get('/health', async () => {
-  return { status: 'ok', timestamp: new Date().toISOString() };
+  return {
+    status: 'ok',
+    version: '2.0.0-hd-wallets',
+    timestamp: new Date().toISOString(),
+  };
 });
 
 // Register Wallet Routes
@@ -74,7 +78,6 @@ fastify.post('/webhooks/tatum', async (request, reply) => {
   const { amount, currency, txId, address } = data;
 
   try {
-    // Find the user by their deposit address (either TON or BEP-20)
     let user = null;
     if (address) {
       user = await prisma.user.findFirst({
@@ -94,7 +97,6 @@ fastify.post('/webhooks/tatum', async (request, reply) => {
 
     const standardCurrency = (currency || 'USDT').toUpperCase();
 
-    // Create or update the user's wallet for this currency
     const wallet = await prisma.wallet.upsert({
       where: {
         userId_currency: {
@@ -114,7 +116,6 @@ fastify.post('/webhooks/tatum', async (request, reply) => {
       },
     });
 
-    // Record the transaction
     await prisma.transaction.create({
       data: {
         walletId: wallet.id,
@@ -147,7 +148,6 @@ fastify.post('/deposits', async (request, reply) => {
   }
 
   try {
-    // Find internal user
     const user = await prisma.user.findUnique({
       where: { telegramId: BigInt(tgUser.id) },
     });
@@ -209,7 +209,9 @@ fastify.get('/profile', async (request, reply) => {
 
     // Auto-derive HD deposit addresses if not yet populated
     if (!user.tonDepositAddress || !user.bep20DepositAddress) {
-      const derived = deriveUserWallets(user.walletIndex);
+      const walletIdx = user.walletIndex || 1;
+      const derived = deriveUserWallets(walletIdx);
+
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
@@ -246,6 +248,8 @@ fastify.get('/profile', async (request, reply) => {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
+        first_name: user.firstName,
+        last_name: user.lastName,
         languageCode: user.languageCode,
         walletIndex: user.walletIndex,
         tonDepositAddress: user.tonDepositAddress,
