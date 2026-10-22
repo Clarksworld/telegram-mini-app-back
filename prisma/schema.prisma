@@ -29,38 +29,42 @@ enum DepositStatus {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  telegramId    BigInt    @unique
-  username      String?
-  firstName     String?
-  lastName      String?
-  languageCode  String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  depositAddress String?   @unique
+  id                  String           @id @default(uuid())
+  telegramId          BigInt           @unique
+  username            String?
+  firstName           String?
+  lastName            String?
+  languageCode        String?
+  walletIndex         Int              @default(autoincrement()) @unique
+  tonDepositAddress   String?          @unique
+  bep20DepositAddress String?          @unique
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   // Referral System
-  referrerId    String?
-  referrer      User?      @relation("UserReferrals", fields: [referrerId], references: [id])
-  referrals     User[]     @relation("UserReferrals")
+  referrerId          String?
+  referrer            User?            @relation("UserReferrals", fields: [referrerId], references: [id])
+  referrals           User[]           @relation("UserReferrals")
 
-  wallets       Wallet[]
-  deposits      DepositRequest[]
+  wallets             Wallet[]
+  deposits            DepositRequest[]
 }
 
 model Wallet {
-  id            String    @id @default(uuid())
-  userId        String    @unique
-  currency      String    // e.g., "USDT", "BTC", "TON"
-  balance       Decimal   @default(0.00) @db.Decimal(20, 8)
-  lockedBalance Decimal   @default(0.00) @db.Decimal(20, 8)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id            String        @id @default(uuid())
+  userId        String
+  currency      String        // e.g., "USDT", "BTC", "TON"
+  address       String?
+  balance       Decimal       @default(0.00) @db.Decimal(20, 8)
+  lockedBalance Decimal       @default(0.00) @db.Decimal(20, 8)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  user          User      @relation(fields: [userId], references: [id])
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions  Transaction[]
 
   @@unique([userId, currency])
+  @@index([userId])
 }
 
 model Transaction {
@@ -69,9 +73,9 @@ model Transaction {
   amount          Decimal           @db.Decimal(20, 8)
   fee             Decimal           @default(0.00) @db.Decimal(20, 8)
   type            TransactionType
-  status          TransactionStatus  @default(PENDING)
+  status          TransactionStatus @default(PENDING)
 
-  assetSymbol     String?           // e.g., "ETH"
+  assetSymbol     String?
   executionPrice  Decimal?          @db.Decimal(20, 8)
 
   externalTxId    String?           @unique
@@ -79,21 +83,23 @@ model Transaction {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
-  wallet          Wallet            @relation(fields: [walletId], references: [id])
+  wallet          Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId])
   @@index([status])
 }
 
 model DepositRequest {
-  id            String    @id @default(uuid())
+  id            String        @id @default(uuid())
   userId        String
-  amount        Decimal   @db.Decimal(20, 8)
+  amount        Decimal       @db.Decimal(20, 8)
   currency      String
-  txId          String    @unique
+  txId          String        @unique
   status        DepositStatus @default(PENDING)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  user          User      @relation(fields: [userId], references: [id])
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
