@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { deriveUserWallets } from '../../services/wallet';
+import { syncUserDeposits } from '../../services/deposit-watcher';
 
 interface WalletPluginOptions extends FastifyPluginOptions {
   prisma: PrismaClient;
@@ -52,6 +53,9 @@ export async function walletRoutes(fastify: FastifyInstance, options: WalletPlug
         });
       }
 
+      // Auto-check for on-chain deposits
+      await syncUserDeposits(prisma, user.id, user.tonDepositAddress, user.bep20DepositAddress);
+
       // Reload wallets
       const wallets = await prisma.wallet.findMany({
         where: { userId: user.id },
@@ -75,6 +79,48 @@ export async function walletRoutes(fastify: FastifyInstance, options: WalletPlug
     } catch (error) {
       fastify.log.error(error);
       return reply.status(500).send({ error: 'Failed to retrieve wallets' });
+    }
+  });
+
+  // Explicitly trigger on-chain deposit sync
+  fastify.post('/sync', async (request, reply) => {
+    const tgUser = (request as any).user;
+    if (!tgUser) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { telegramId: BigInt(tgUser.id) },
+      });
+
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      const syncResult = await syncUserDeposits(
+        prisma,
+        user.id,
+        user.tonDepositAddress,
+        user.bep20DepositAddress
+      );
+
+      const wallets = await prisma.wallet.findMany({
+        where: { userId: user.id },
+      });
+
+      return {
+        success: true,
+        message: 'On-chain deposit sync completed',
+        syncResult,
+        wallets: wallets.map((w) => ({
+          currency: w.currency,
+          balance: w.balance.toString(),
+        })),
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ error: 'Failed to sync on-chain deposits' });
     }
   });
 
