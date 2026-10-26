@@ -28,6 +28,18 @@ enum DepositStatus {
   REJECTED
 }
 
+enum TradeType {
+  BUY
+  SELL
+}
+
+enum TradeOrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
 model User {
   id                  String           @id @default(uuid())
   telegramId          BigInt           @unique
@@ -38,6 +50,12 @@ model User {
   walletIndex         Int              @default(autoincrement()) @unique
   tonDepositAddress   String?          @unique
   bep20DepositAddress String?          @unique
+
+  // User Bank Details (configured in Settings)
+  bankName            String?
+  accountNumber       String?
+  accountName         String?
+
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
@@ -48,6 +66,7 @@ model User {
 
   wallets             Wallet[]
   deposits            DepositRequest[]
+  tradeOrders         TradeOrder[]
 }
 
 model Wallet {
@@ -102,4 +121,31 @@ model DepositRequest {
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model TradeOrder {
+  id              String            @id @default(uuid())
+  userId          String
+  type            TradeType
+  token           String            // "USDT" | "TON"
+  cryptoAmount    Decimal           @db.Decimal(20, 8)
+  nairaAmount     Decimal           @db.Decimal(20, 2)
+  rateNgn         Decimal           @db.Decimal(20, 2)
+  status          TradeOrderStatus  @default(PENDING)
+
+  // Bank details for Sell payout
+  bankName        String?
+  accountNumber   String?
+  accountName     String?
+
+  // Reference code
+  reference       String            @unique
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }

@@ -32,6 +32,9 @@ export const UserProfileSchema = {
     walletIndex: { type: 'integer', example: 1 },
     tonDepositAddress: { type: 'string', example: 'UQ...' },
     bep20DepositAddress: { type: 'string', example: '0x...' },
+    bankName: { type: 'string', nullable: true },
+    accountNumber: { type: 'string', nullable: true },
+    accountName: { type: 'string', nullable: true },
     wallets: {
       type: 'array',
       items: WalletItemSchema,
@@ -45,7 +48,7 @@ export const swaggerOptions: any = {
     info: {
       title: 'Telegram Mini App - Wallet & Trading API',
       description: `
-API for Telegram Mini App custodial HD wallet generation, balances, and deposit tracking.
+API for Telegram Mini App custodial HD wallet generation, balances, deposits, and P2P Buy/Sell crypto trading.
 
 ### How to test in Swagger UI:
 Endpoints requiring authentication are marked with a lock icon.
@@ -53,9 +56,9 @@ Endpoints requiring authentication are marked with a lock icon.
 2. In the **Value** field, enter:
    \`tma test_user=123456789\`
 3. Click **Authorize** then **Close**.
-4. Test **GET /profile** or **GET /wallet/me** with "Try it out"!
+4. Test **GET /profile**, **GET /trade/rates**, or **POST /trade/sell**!
 `,
-      version: '2.0.0',
+      version: '2.1.0',
     },
     servers: [
       {
@@ -81,6 +84,8 @@ Endpoints requiring authentication are marked with a lock icon.
     tags: [
       { name: 'System', description: 'System health and status' },
       { name: 'User & Profile', description: 'Telegram user profile and auto-wallet derivation' },
+      { name: 'Settings & Bank', description: 'User bank account setup and management' },
+      { name: 'Trade', description: 'CoinMarketCap rates, Buy & Sell crypto flows' },
       { name: 'Wallet', description: 'HD wallet generation, retrieval, and on-chain syncing' },
       { name: 'Deposits', description: 'Manual deposit reporting and transaction matching' },
       { name: 'Webhooks', description: 'Third-party notification webhooks' },

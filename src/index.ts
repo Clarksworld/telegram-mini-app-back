@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { validateTelegramInitData } from './auth';
 import { walletRoutes } from './routes/wallet/handlers';
+import { tradeRoutes } from './routes/trade/handlers';
 import { deriveUserWallets } from './services/wallet';
 import {
   swaggerOptions,
@@ -47,7 +48,9 @@ fastify.addHook('preHandler', async (request, reply) => {
     url === '/health' ||
     url === '/webhooks/tatum' ||
     url.startsWith('/docs') ||
-    url.startsWith('/documentation')
+    url.startsWith('/documentation') ||
+    url === '/trade/rates' ||
+    url === '/trade/platform-account'
   ) {
     return;
   }
@@ -253,6 +256,9 @@ const start = async () => {
               walletIndex: user.walletIndex,
               tonDepositAddress: user.tonDepositAddress,
               bep20DepositAddress: user.bep20DepositAddress,
+              bankName: user.bankName,
+              accountNumber: user.accountNumber,
+              accountName: user.accountName,
               wallets: wallets.map((w) => ({
                 id: w.id,
                 currency: w.currency,
@@ -275,6 +281,10 @@ const start = async () => {
 
     // Register Wallet Routes
     await fastify.register(walletRoutes, { prefix: '/wallet', prisma });
+
+    // Register Trade & Settings Routes
+    await fastify.register(tradeRoutes, { prefix: '/trade', prisma });
+    await fastify.register(tradeRoutes, { prefix: '/settings', prisma });
 
     // Manual deposit notification from user
     fastify.post(
